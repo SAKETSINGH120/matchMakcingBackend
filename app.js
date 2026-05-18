@@ -16,7 +16,7 @@ app.set("trust proxy", 1);
 app.use(securityMiddleware.helmet);
 app.use(securityMiddleware.cors);
 app.use(securityMiddleware.compression);
-app.use(securityMiddleware.rateLimit);
+// app.use(securityMiddleware.rateLimit);
 
 // Enhanced API logging middleware
 const getLoggerMiddleware = () => {

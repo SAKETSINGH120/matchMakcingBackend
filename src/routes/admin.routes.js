@@ -21,24 +21,23 @@ const asyncHandler = require("../utils/asyncHandler");
 const { authenticateAdmin, authorize } = require("../middlewares/auth");
 const { userValidator } = require("../controllers/user/validator");
 
-// ── Auth (public) ──────────────────────────────────────────
 router.post("/signup", asyncHandler(adminController.signup));
 router.post("/login", asyncHandler(adminController.login));
 
-// ── All routes below require admin authentication ──────────
+// ── All routes below require admin authentication
 router.use(authenticateAdmin);
 
 //profile
 router.get("/profile", asyncHandler(adminController.profile));
 
-// ── Dashboard ──────────────────────────────────────────────
+// ── Dashboard
 router.get(
   "/dashboard",
   authorize("dashboard", "read"),
   asyncHandler(adminDashboardController.getStats),
 );
 
-// ── Analytics & Trends ─────────────────────────────────────
+// ── Analytics & Trends
 router.get(
   "/analytics/user-growth",
   authorize("analytics", "read"),
@@ -63,7 +62,7 @@ router.get(
   asyncHandler(adminAnalyticsController.getSubscriptionTrends),
 );
 
-// ── User Management ────────────────────────────────────────
+// ── User Management
 router.get(
   "/users",
   authorize("users", "read"),
@@ -89,7 +88,7 @@ router.patch(
   asyncHandler(adminUserController.deactivateUser),
 );
 
-// ── Reports ────────────────────────────────────────────────
+// ── Reports
 router.get(
   "/reports",
   authorize("reports", "read"),
@@ -103,7 +102,7 @@ router.patch(
   asyncHandler(adminUserController.resolveReport),
 );
 
-// ── Match Management ───────────────────────────────────────
+// ── Match Management
 router.get(
   "/matches",
   authorize("match", "read"),
@@ -133,7 +132,7 @@ router.delete(
   asyncHandler(adminMatchController.unmatchUsers),
 );
 
-// ── Meeting Management ─────────────────────────────────────
+// ── Meeting Management
 router.get(
   "/meetings",
   authorize("meeting", "read"),
@@ -153,7 +152,7 @@ router.patch(
   asyncHandler(adminMatchController.updateMeetingStatus),
 );
 
-// ── Subscription Management ───────────────────────────────
+// ── Subscription Management
 router.get(
   "/subscriptions",
   authorize("subscriptions", "read"),
@@ -195,7 +194,7 @@ router.patch(
   asyncHandler(adminSubscriptionController.extendSubscription),
 );
 
-// ── Feedback / Support Tickets ─────────────────────────────
+// ── Feedback / Support Tickets
 router.get(
   "/feedback",
   authorize("feedback", "read"),
@@ -273,7 +272,7 @@ router.delete(
   asyncHandler(adminRoleController.delete),
 );
 
-// ── CMS Management ─────────────────────────────────────────
+// ── CMS Management
 router.get(
   "/cms",
   authorize("cms", "read"),
@@ -298,7 +297,7 @@ router.patch(
   asyncHandler(adminCMSController.toggleStatus),
 );
 
-// ── Email Templates ───────────────────────────────────────
+// ── Email Templates
 router.get(
   "/email-template",
   asyncHandler(adminEmailTemplateController.getCurrent),
@@ -309,7 +308,7 @@ router.post(
   asyncHandler(adminEmailTemplateController.createOrUpdate),
 );
 
-// ── Chat History ───────────────────────────────────────────
+// ── Chat History
 router.get(
   "/chat/:matchId",
   authorize("matches", "read"),
@@ -317,7 +316,7 @@ router.get(
   asyncHandler(adminChatController.getChatHistory),
 );
 
-// ── Notifications ──────────────────────────────────────────
+// ── Notifications
 router.get(
   "/notifications",
   asyncHandler(adminNotificationController.getNotifications),

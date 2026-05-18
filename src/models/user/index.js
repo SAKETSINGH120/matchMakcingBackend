@@ -178,7 +178,7 @@ module.exports = {
     return user;
   },
 
-  //create user vad admin
+  //create user vai admin
   createUserVaiAdminWithUserIdAndPassword: async (data) => {
     const MAX_RETRIES = 5;
 
@@ -192,6 +192,7 @@ module.exports = {
           userID,
           password: hashedPassword,
           isNewUser: true,
+          isVerified: true,
         });
 
         return {

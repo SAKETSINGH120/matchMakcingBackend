@@ -47,6 +47,7 @@ const adminUserController = {
   getUserById: async (req, res, next) => {
     try {
       const user = await adminUserService.getUserById(req.params.id);
+      console.log("🚀 ~ user:", user);
 
       if (!user) {
         throw APIError.notFound("User not found");
@@ -220,10 +221,12 @@ const adminUserController = {
 
   createUserViaAdmin: async (req, res, next) => {
     try {
-      const { number, name, email } = req.body;
+      const { number, name, email, gender } = req.body;
 
-      if (!number || !name || !email) {
-        throw APIError.badRequest("Number , email and name are required");
+      if (!number || !name || !email || !gender) {
+        throw APIError.badRequest(
+          "Number , email , gender and name are required",
+        );
       }
 
       const alreadyPresent = await User.getUserbyNumber(number);
@@ -236,6 +239,7 @@ const adminUserController = {
           number,
           name,
           email,
+          gender,
         });
 
       const userData = {
@@ -246,6 +250,7 @@ const adminUserController = {
         temporaryPassword,
         isVerified: user.isVerified,
         createdAt: user.createdAt,
+        gender,
       };
 
       return APIResponse.send(

@@ -4,7 +4,6 @@ const swipeController = require("../controllers/swipe/swipe");
 const { swipeValidator } = require("../controllers/swipe/validator");
 const { authenticateUser } = require("../middlewares/auth");
 
-// All swipe routes require authentication
 router.use(authenticateUser);
 
 router.post("/discover", swipeController.discoverMatches);

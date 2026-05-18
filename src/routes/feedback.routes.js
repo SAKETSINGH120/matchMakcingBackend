@@ -6,7 +6,6 @@ const { authenticateUser } = require("../middlewares/auth");
 
 router.use(authenticateUser);
 
-// ── Support Tickets ──────────────────────────────────────
 router.post(
   "/ticket",
   feedbackValidator.createTicket,
@@ -14,7 +13,6 @@ router.post(
 );
 router.get("/my-tickets", feedbackController.getMyTickets);
 
-// ── Rating (partner + platform in one call) ──────────────
 router.post(
   "/rate",
   feedbackValidator.createRating,
