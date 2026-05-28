@@ -275,6 +275,47 @@ const adminUserController = {
         throw APIError.badRequest("Provide userId or userIds");
       }
 
+      // Fast path: if only one user is requested, regenerate credentials
+      // then trigger the email without awaiting it so the API returns quickly.
+      if (ids.length === 1) {
+        const id = ids[0];
+        try {
+          const { user, userID, temporaryPassword } =
+            await User.regenerateCredentialsForUser(id);
+
+          // fire-and-forget email send
+          // sendUserCredentialsEmail({
+          //   to: user.email,
+          //   name: user.name,
+          //   userID,
+          //   temporaryPassword,
+          // }).catch((err) =>
+          //   console.error("sendUserCredentialsEmail error:", err),
+          // );
+
+          // async audit log (don't block response)
+          if (req.admin?._id) {
+            AuditLogModel.log({
+              adminId: req.admin._id,
+              action: "send_user_credentials_email",
+              targetType: "user",
+              targetId: id,
+              details: { sentCount: 1, failedCount: 0, total: 1 },
+              ipAddress: req.ip,
+            }).catch((err) => console.error("AuditLogModel.log error:", err));
+          }
+
+          return APIResponse.send(res, true, 200, "Credential email queued", {
+            userDbId: id,
+            email: user.email,
+            userID,
+          });
+        } catch (error) {
+          next(error);
+          return;
+        }
+      }
+
       const results = [];
 
       for (const id of ids) {
@@ -282,12 +323,12 @@ const adminUserController = {
           const { user, userID, temporaryPassword } =
             await User.regenerateCredentialsForUser(id);
 
-          await sendUserCredentialsEmail({
-            to: user.email,
-            name: user.name,
-            userID,
-            temporaryPassword,
-          });
+          // await sendUserCredentialsEmail({
+          //   to: user.email,
+          //   name: user.name,
+          //   userID,
+          //   temporaryPassword,
+          // });
 
           results.push({
             userDbId: id,

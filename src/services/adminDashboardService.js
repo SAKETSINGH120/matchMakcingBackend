@@ -31,8 +31,8 @@ const adminDashboardService = {
       ticketCounts,
     ] = await Promise.all([
       User.countDocuments(),
-      User.countDocuments({ geneder: "male" }),
-      User.countDocuments({ geneder: "female" }),
+      User.countDocuments({ gender: "male" }),
+      User.countDocuments({ gender: "female" }),
       User.countDocuments({ status: "active" }),
       User.countDocuments({ status: "blocked" }),
       User.countDocuments({ status: "deleted" }),

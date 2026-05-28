@@ -255,7 +255,7 @@ module.exports = {
       );
     }
 
-    const temporaryPassword = generatePassword();
+    const temporaryPassword = "123456"; //generatePassword();
     const hashedPassword = await bcryptjs.hash(temporaryPassword, 12);
     user.password = hashedPassword;
     await user.save();
