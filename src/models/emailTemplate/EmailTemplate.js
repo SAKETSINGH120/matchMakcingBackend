@@ -15,9 +15,29 @@ const EmailTemplateSchema = new mongoose.Schema(
       trim: true,
       maxlength: 200,
     },
-    body: {
+    introText: {
       type: String,
       required: true,
+      trim: true,
+    },
+    securityMessage: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    buttonText: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    helpMessage: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    body: {
+      type: String,
+      required: false,
     },
     isActive: {
       type: Boolean,

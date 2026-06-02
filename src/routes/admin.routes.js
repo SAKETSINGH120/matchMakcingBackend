@@ -307,6 +307,11 @@ router.post(
   emailTemplateValidator.upsert,
   asyncHandler(adminEmailTemplateController.createOrUpdate),
 );
+router.post(
+  "/email-template/preview",
+  emailTemplateValidator.preview,
+  asyncHandler(adminEmailTemplateController.preview),
+);
 
 // ── Chat History
 router.get(

@@ -6,46 +6,17 @@ const EmailTemplateRepository = require("../models/emailTemplate/index");
 let cachedTransporter = null;
 
 const TEMPLATE_NAME = "user_credentials_email";
-const DEFAULT_EMAIL_SUBJECT =
-  "Welcome to The Bond Agency - Your Account Credentials";
+const DEFAULT_EMAIL_SUBJECT = "Welcome to The Bond Agency - Your Account Credentials";
+const DEFAULT_INTRO_TEXT = "Welcome to The Bond Agency! Your account has been successfully created. Below are your login credentials to get started.";
+const DEFAULT_SECURITY_MESSAGE = "This is a temporary password. For your account security, please log in immediately and change your password to something unique and secure that only you know.";
+const DEFAULT_BUTTON_TEXT = "Go to Login";
+const DEFAULT_HELP_MESSAGE = "If you face any issues logging in or have questions, please contact our support team at";
 
 const getAppLoginUrl = () =>
   process.env.APP_LOGIN_URL || "https://app.thebondagency.com/login";
 
 const getSupportEmail = () =>
   process.env.APP_SUPPORT_EMAIL || "support@thebondagency.com";
-
-const DEFAULT_CREDENTIALS_EMAIL_BODY = `
-  <div class="welcome">
-    <p>Hello <strong>{{name}}</strong>,</p>
-    <p class="intro-text">Welcome to The Bond Agency! Your account has been successfully created. Below are your login credentials to get started.</p>
-  </div>
-
-  <div class="credentials-box">
-    <h3>Your Login Credentials</h3>
-    <div class="credential-item">
-      <div class="credential-label">User ID:</div>
-      <div class="credential-value"><code style="background: #f0f0f0; padding: 4px 8px; border-radius: 3px; font-family: 'Courier New', monospace; font-weight: 500;">{{userID}}</code></div>
-    </div>
-    <div class="credential-item">
-      <div class="credential-label">Temporary Password:</div>
-      <div class="credential-value"><code style="background: #f0f0f0; padding: 4px 8px; border-radius: 3px; font-family: 'Courier New', monospace; font-weight: 500;">{{temporaryPassword}}</code></div>
-    </div>
-  </div>
-
-  <div class="security-notice">
-    <h4>Security Notice</h4>
-    <p>This is a temporary password. For your account security, please log in immediately and change your password to something unique and secure that only you know.</p>
-  </div>
-
-  <div style="text-align: center;">
-    <a href="{{loginUrl}}" class="action-button">Go to Login</a>
-  </div>
-
-  <p style="color: #999; font-size: 13px; margin-top: 24px;">
-    <strong>Need Help?</strong> If you face any issues logging in or have questions, please contact our support team at <a href="mailto:{{supportEmail}}" style="color: #667eea; text-decoration: none;">{{supportEmail}}</a>
-  </p>
-`;
 
 const emailLayoutTemplate = `
   <!DOCTYPE html>
@@ -119,7 +90,10 @@ const stripHtml = (html) =>
 
 const buildFallbackTemplate = () => ({
   subject: DEFAULT_EMAIL_SUBJECT,
-  body: DEFAULT_CREDENTIALS_EMAIL_BODY,
+  introText: DEFAULT_INTRO_TEXT,
+  securityMessage: DEFAULT_SECURITY_MESSAGE,
+  buttonText: DEFAULT_BUTTON_TEXT,
+  helpMessage: DEFAULT_HELP_MESSAGE,
 });
 
 const getEmailTemplateByName = async (name) => {
@@ -129,6 +103,73 @@ const getEmailTemplateByName = async (name) => {
 const renderEmailLayout = ({ body, currentYear }) => {
   const layout = Handlebars.compile(emailLayoutTemplate);
   return layout({ body, currentYear });
+};
+
+const renderFullEmail = ({
+  subject,
+  introText,
+  securityMessage,
+  buttonText,
+  helpMessage,
+  name,
+  userID,
+  temporaryPassword,
+}) => {
+  const currentYear = new Date().getFullYear();
+  const templateData = {
+    name: name || "User",
+    userID: userID || "john.doe@example.com",
+    temporaryPassword: temporaryPassword || "T3mpP@ssw0rd!",
+    loginUrl: getAppLoginUrl(),
+    supportEmail: getSupportEmail(),
+    currentYear,
+  };
+
+  const resolvedSubject = Handlebars.compile(subject || DEFAULT_EMAIL_SUBJECT)(templateData);
+
+  const bodyHtml = `
+    <div class="welcome">
+      <p>Hello <strong>{{name}}</strong>,</p>
+      <p class="intro-text">${introText || DEFAULT_INTRO_TEXT}</p>
+    </div>
+
+    <div class="credentials-box">
+      <h3>Your Login Credentials</h3>
+      <div class="credential-item">
+        <div class="credential-label">User ID:</div>
+        <div class="credential-value"><code style="background: #f0f0f0; padding: 4px 8px; border-radius: 3px; font-family: 'Courier New', monospace; font-weight: 500;">{{userID}}</code></div>
+      </div>
+      <div class="credential-item">
+        <div class="credential-label">Temporary Password:</div>
+        <div class="credential-value"><code style="background: #f0f0f0; padding: 4px 8px; border-radius: 3px; font-family: 'Courier New', monospace; font-weight: 500;">{{temporaryPassword}}</code></div>
+      </div>
+    </div>
+
+    <div class="security-notice">
+      <h4>Security Notice</h4>
+      <p>${securityMessage || DEFAULT_SECURITY_MESSAGE}</p>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="{{loginUrl}}" class="action-button">${buttonText || DEFAULT_BUTTON_TEXT}</a>
+    </div>
+
+    <p style="color: #999; font-size: 13px; margin-top: 24px;">
+      <strong>Need Help?</strong> ${helpMessage || DEFAULT_HELP_MESSAGE} <a href="mailto:{{supportEmail}}" style="color: #667eea; text-decoration: none;">{{supportEmail}}</a>
+    </p>
+  `;
+
+  const compiledBody = Handlebars.compile(bodyHtml)(templateData);
+  const finalHtml = renderEmailLayout({
+    body: compiledBody,
+    currentYear,
+  });
+
+  return {
+    subject: resolvedSubject,
+    html: finalHtml,
+    text: stripHtml(compiledBody),
+  };
 };
 
 const getTransporter = () => {
@@ -167,7 +208,6 @@ const sendUserCredentialsEmail = async ({
   body,
 }) => {
   const transporter = getTransporter();
-
   const currentYear = new Date().getFullYear();
   const templateData = {
     name: name || "User",
@@ -180,26 +220,101 @@ const sendUserCredentialsEmail = async ({
 
   const template =
     (await getEmailTemplateByName(TEMPLATE_NAME)) || buildFallbackTemplate();
-  const templateBody = body || template.body;
-  const templateSubject = subject || template.subject || DEFAULT_EMAIL_SUBJECT;
 
-  const compiledBody = Handlebars.compile(templateBody)(templateData);
-  const finalHtml = renderEmailLayout({
-    body: compiledBody,
-    currentYear,
-  });
+  let rendered;
+  if (body) {
+    // Backward compatibility: if full custom HTML is passed, render it
+    const compiledBody = Handlebars.compile(body)(templateData);
+    const finalHtml = renderEmailLayout({
+      body: compiledBody,
+      currentYear,
+    });
+    rendered = {
+      subject: subject || template.subject || DEFAULT_EMAIL_SUBJECT,
+      html: finalHtml,
+      text: stripHtml(compiledBody),
+    };
+  } else {
+    // Modern structured render
+    rendered = renderFullEmail({
+      subject: subject || template.subject,
+      introText: template.introText,
+      securityMessage: template.securityMessage,
+      buttonText: template.buttonText,
+      helpMessage: template.helpMessage,
+      name,
+      userID,
+      temporaryPassword,
+    });
+  }
 
   await transporter.sendMail({
     from: process.env.SMTP_FROM,
     to,
-    subject: templateSubject,
-    text: stripHtml(compiledBody),
-    html: finalHtml,
+    subject: rendered.subject,
+    text: rendered.text,
+    html: rendered.html,
   });
+};
+
+const migrateTemplates = async () => {
+  try {
+    const EmailTemplate = require("../models/emailTemplate/EmailTemplate");
+    const templates = await EmailTemplate.find({});
+
+    for (const template of templates) {
+      if (!template.introText && template.body) {
+        console.log(`[Migration] Migrating email template: ${template.name}`);
+
+        const introMatch = template.body.match(/class="intro-text"[^>]*>([\s\S]*?)<\/p>/i) ||
+                           template.body.match(/<p class="intro-text">([\s\S]*?)<\/p>/i);
+        const securityMatch = template.body.match(/<div class="security-notice">[\s\S]*?<p>([\s\S]*?)<\/p>/i) ||
+                              template.body.match(/class="security-notice"[\s\S]*?<p>([\s\S]*?)<\/p>/i);
+        const buttonMatch = template.body.match(/<a[^>]*class="action-button"[^>]*>([\s\S]*?)<\/a>/i);
+        const helpMatch = template.body.match(/<strong>Need Help\??<\/strong>\s*([\s\S]*?)\s*<a/i);
+
+        const stripTags = (str) => str ? str.replace(/<[^>]+>/g, "").trim() : "";
+
+        const introText = introMatch ? stripTags(introMatch[1]) : DEFAULT_INTRO_TEXT;
+        const securityMessage = securityMatch ? stripTags(securityMatch[1]) : DEFAULT_SECURITY_MESSAGE;
+        const buttonText = buttonMatch ? stripTags(buttonMatch[1]) : DEFAULT_BUTTON_TEXT;
+        const helpMessage = helpMatch ? stripTags(helpMatch[1]) : DEFAULT_HELP_MESSAGE;
+
+        template.introText = introText;
+        template.securityMessage = securityMessage;
+        template.buttonText = buttonText;
+        template.helpMessage = helpMessage;
+        template.set("body", undefined);
+
+        await template.save();
+        console.log(`[Migration] Successfully migrated email template: ${template.name}`);
+      }
+    }
+
+    // Seed default template if none exists
+    const existing = await EmailTemplate.findOne({ name: TEMPLATE_NAME });
+    if (!existing) {
+      console.log(`[Migration] Seeding default email template: ${TEMPLATE_NAME}`);
+      await EmailTemplate.create({
+        name: TEMPLATE_NAME,
+        subject: DEFAULT_EMAIL_SUBJECT,
+        introText: DEFAULT_INTRO_TEXT,
+        securityMessage: DEFAULT_SECURITY_MESSAGE,
+        buttonText: DEFAULT_BUTTON_TEXT,
+        helpMessage: DEFAULT_HELP_MESSAGE,
+        isActive: true,
+      });
+      console.log(`[Migration] Successfully seeded default email template.`);
+    }
+  } catch (error) {
+    console.error("[Migration] Error migrating email templates:", error);
+  }
 };
 
 module.exports = {
   sendUserCredentialsEmail,
-  DEFAULT_CREDENTIALS_EMAIL_BODY,
+  renderFullEmail,
+  migrateTemplates,
+  TEMPLATE_NAME,
   DEFAULT_EMAIL_SUBJECT,
 };

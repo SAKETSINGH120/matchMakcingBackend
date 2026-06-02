@@ -284,14 +284,14 @@ const adminUserController = {
             await User.regenerateCredentialsForUser(id);
 
           // fire-and-forget email send
-          // sendUserCredentialsEmail({
-          //   to: user.email,
-          //   name: user.name,
-          //   userID,
-          //   temporaryPassword,
-          // }).catch((err) =>
-          //   console.error("sendUserCredentialsEmail error:", err),
-          // );
+          sendUserCredentialsEmail({
+            to: user.email,
+            name: user.name,
+            userID,
+            temporaryPassword,
+          }).catch((err) =>
+            console.error("sendUserCredentialsEmail error:", err),
+          );
 
           // async audit log (don't block response)
           if (req.admin?._id) {
