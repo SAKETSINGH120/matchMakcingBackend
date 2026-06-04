@@ -280,7 +280,7 @@ const feedService = {
     const [profiles, total] = await Promise.all([
       User.find(filterQuery)
         .select(
-          "name gender dob bio primaryImage education profession isVerified",
+          "name gender dob bio primaryImage education profession isVerified number",
         )
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)

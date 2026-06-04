@@ -123,6 +123,7 @@ module.exports = {
       "_id",
       "createdAt",
       "updatedAt",
+      "email",
     ];
 
     // Remove protected fields from update data
